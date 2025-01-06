@@ -1,4 +1,4 @@
 {
-  "language": "python",
-  "workingDirectory": "ai-user-research"
+  "providers": ["python"],
+  "buildDir": "ai-user-research/"
 }
