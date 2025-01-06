@@ -1,7 +1,10 @@
 {
   "providers": ["python"],
   "buildDir": "ai-user-research",
+  "install": {
+    "cmds": ["python -m pip install -r requirements.txt"]
+  },
   "start": {
-    "cmd": "cd ai-user-research && pip install -r requirements.txt && uvicorn backend.src.main:app --host 0.0.0.0 --port $PORT"
+    "cmd": "uvicorn backend.src.main:app --host 0.0.0.0 --port $PORT"
   }
 }
