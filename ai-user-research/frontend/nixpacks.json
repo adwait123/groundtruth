@@ -13,6 +13,6 @@
     "cmds": ["npm run build"]
   },
   "start": {
-    "cmd": "npm start"
+    "cmd": "npm run preview -- --host --port $PORT"
   }
 }
