@@ -1,10 +1,13 @@
 {
-  "providers": ["python", "nodejs"],
+  "providers": ["python"],
   "buildDir": "ai-user-research",
+  "phases": {
+    "setup": {
+      "nixPkgs": ["nodejs-18_x"]
+    }
+  },
   "install": {
     "cmds": [
-      "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -",
-      "apt-get install -y nodejs",
       "cd frontend && npm install && npm run build && cd ..",
       "pip install -r requirements.txt"
     ]
