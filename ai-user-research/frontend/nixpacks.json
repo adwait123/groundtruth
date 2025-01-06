@@ -1,9 +1,9 @@
 {
-  "providers": ["nodejs"],
+  "providers": ["node"],
   "buildDir": "frontend",
   "phases": {
     "setup": {
-      "nixPkgs": ["nodejs_18"]
+      "nixPkgs": ["nodejs-18_x"]
     }
   },
   "install": {
