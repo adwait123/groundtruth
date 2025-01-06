@@ -1,14 +1,15 @@
-
 {
   "providers": ["python", "nodejs"],
   "buildDir": "ai-user-research",
   "install": {
     "cmds": [
+      "curl -fsSL https://deb.nodesource.com/setup_18.x | bash -",
+      "apt-get install -y nodejs",
       "cd frontend && npm install && npm run build && cd ..",
       "pip install -r requirements.txt"
     ]
   },
   "start": {
-    "cmd": "cd ai-user-research && python backend/src/main.py"
+    "cmd": "PYTHONPATH=$PYTHONPATH:/app/ai-user-research cd ai-user-research && python backend/src/main.py"
   }
 }
