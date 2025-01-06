@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { API_URL } from './config'
 
 const steps = [
   { id: 'setup', title: 'Project Setup' },
@@ -34,7 +35,7 @@ function App() {
 
       console.log('Sending project info:', projectInfo) // Debug log
 
-      const response = await fetch('http://localhost:8000/api/start-project', {
+      const response = await fetch('${API_URL}/api/start-project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -73,7 +74,7 @@ function App() {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`http://localhost:8000/api/submit-response/${sessionId}`, {
+      const response = await fetch(`${API_URL}/api/submit-response/${sessionId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ function App() {
       setIsLoading(true)
       setError(null)
 
-      const response = await fetch(`http://localhost:8000/api/analyze/${sessionId}`, {
+      const response = await fetch(`${API_URL}/api/analyze/${sessionId}`, {
         method: 'POST',
       })
 
