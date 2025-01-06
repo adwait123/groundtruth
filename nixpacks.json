@@ -2,7 +2,7 @@
   "providers": ["python"],
   "buildDir": "ai-user-research",
   "install": {
-    "cmds": ["python -m pip install --user -r requirements.txt"]
+    "cmds": ["pip install -r requirements.txt"]
   },
   "start": {
     "cmd": "cd ai-user-research && python backend/src/main.py"
