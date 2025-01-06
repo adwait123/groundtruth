@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { API_URL } from './config'
+import API_URL from './config'
 
 const steps = [
   { id: 'setup', title: 'Project Setup' },
@@ -34,6 +34,7 @@ function App() {
       setError(null)
 
       console.log('Sending project info:', projectInfo) // Debug log
+console.log('API URL:', API_URL); // Debug log
 
       const response = await fetch('${API_URL}/api/start-project', {
         method: 'POST',
@@ -89,7 +90,7 @@ function App() {
       setCurrentQuestion(data.question)
       setCurrentResponse('')
 
-      if (data.can_finish && responses.length >= 2) {
+      if (data.can_finish && responses.length >= 4) {
         if (window.confirm('Would you like to finish the interview and see the analysis?')) {
           handleAnalysis()
         }
