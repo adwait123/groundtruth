@@ -1,6 +1,6 @@
 openai>=1.0.0
 fastapi
-uvicorn
+uvicorn[standard]
 python-dotenv
 requests
 typing-extensions
