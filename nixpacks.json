@@ -2,6 +2,6 @@
   "providers": ["python"],
   "buildDir": "ai-user-research",
   "start": {
-    "cmd": "cd ai-user-research && python backend/src/main.py"
+    "cmd": "cd ai-user-research && pip install -r requirements.txt && uvicorn backend.src.main:app --host 0.0.0.0 --port $PORT"
   }
 }
