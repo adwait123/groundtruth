@@ -36,6 +36,12 @@ async def global_exception_handler(request, exc):
 async def health_check():
     return {"status": "ok"}
 
+from fastapi.responses import RedirectResponse
+
+@app.get("/")
+async def root():
+    return RedirectResponse(url="/docs")
+
 # Pydantic models
 class ProjectInfo(BaseModel):
     project_name: str
