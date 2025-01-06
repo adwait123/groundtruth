@@ -1,8 +1,12 @@
+
 {
-  "providers": ["python"],
+  "providers": ["python", "nodejs"],
   "buildDir": "ai-user-research",
   "install": {
-    "cmds": ["pip install -r requirements.txt"]
+    "cmds": [
+      "cd frontend && npm install && npm run build && cd ..",
+      "pip install -r requirements.txt"
+    ]
   },
   "start": {
     "cmd": "cd ai-user-research && python backend/src/main.py"
