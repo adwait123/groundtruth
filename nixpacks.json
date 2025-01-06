@@ -1,3 +1,4 @@
 {
-  "language": "python"
+  "language": "python",
+  "workingDirectory": "ai-user-research"
 }
