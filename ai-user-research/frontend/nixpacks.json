@@ -13,6 +13,6 @@
     "cmds": ["npm run build"]
   },
   "start": {
-    "cmd": "npm run preview -- --host --port $PORT"
+    "cmd": "npx serve dist -p $PORT"
   }
 }
