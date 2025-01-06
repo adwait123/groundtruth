@@ -36,7 +36,7 @@ function App() {
       console.log('Sending project info:', projectInfo) // Debug log
 console.log('API URL:', API_URL); // Debug log
 
-      const response = await fetch('${API_URL}/api/start-project', {
+      const response = await fetch(`${API_URL}/api/start-project`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
