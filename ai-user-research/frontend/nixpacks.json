@@ -1,6 +1,11 @@
 {
   "providers": ["nodejs"],
   "buildDir": "ai-user-research/frontend",
+  "phases": {
+    "setup": {
+      "nixPkgs": ["nodejs_18"]
+    }
+  },
   "install": {
     "cmds": ["npm install"]
   },
