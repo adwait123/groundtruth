@@ -2,9 +2,18 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List, Optional, Dict
-from user_research_platform import UserResearchPlatform
+from backend.src.user_research_platform import UserResearchPlatform
 import os
 from dotenv import load_dotenv
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request, exc):
+    logger.error(f"Global error occurred: {str(exc)}")
+    return {"detail": str(exc)}
 
 # Load environment variables
 load_dotenv()
