@@ -1,5 +1,7 @@
 {
   "providers": ["python"],
   "buildDir": "ai-user-research",
-  "start": "python backend/src/user_research_platform.py"
+  "start": {
+    "cmd": "python backend/src/user_research_platform.py"
+  }
 }
