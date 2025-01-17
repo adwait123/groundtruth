@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, Mic, MessageSquare, Send, Loader, BarChart, Target, Lightbulb, AlertTriangle } from 'lucide-react';
+import API_URL from './config'
+
 
 
 const steps = [
@@ -73,7 +75,7 @@ function App() {
       formData.append('product_doc', productDoc);
     }
 
-    const response = await fetch('http://localhost:8000/api/start-project', {
+    const response = await fetch(`${API_URL}/api/start-project`, {
       method: 'POST',
       body: formData,
     });
@@ -116,7 +118,7 @@ const handleSubmitResponse = async () => {
     setIsLoading(true);
     setError(null);
 
-    const response = await fetch(`http://localhost:8000/api/submit-response/${sessionId}`, {
+    const response = await fetch(`${API_URL}/api/submit-response/${sessionId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -176,7 +178,7 @@ const handleAnalysis = async () => {
     setError(null);
     setCurrentStep('analysis');
 
-    const response = await fetch(`http://localhost:8000/api/analyze/${sessionId}`, {
+    const response = await fetch(`${API_URL}/api/analyze/${sessionId}`, {
       method: 'POST',
     });
 
