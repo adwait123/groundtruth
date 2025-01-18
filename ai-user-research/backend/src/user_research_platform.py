@@ -316,13 +316,7 @@ class UserResearchPlatform:
 
         Conversation:
         {self._format_conversation_history()}
-
-        Analysis Instructions:
-        1. First, verify any user questions or statements against the product documentation provided above
-        2. If there are conflicts between user understanding and documentation, highlight these
-        3. Use the documentation to provide accurate information about features and capabilities
-        4. For any questions about features (like remarketing), check the documentation first
-
+ 
         Provide analysis in these sections:
 
         1. Key Findings and Documentation Alignment
