@@ -131,7 +131,7 @@ class UserResearchPlatform:
             relevant_chunks = self._get_relevant_chunks(conversation) if hasattr(self, 'doc_chunks') else []
             product_context = "\n".join(relevant_chunks)
             return f"""
-              You are a product expert discussing improvements to {self.project_info['project_name']} with a {self.project_info['target_audience']}.
+              You are part of the {self.project_info['project_name']} product team having a casual conversation with a {self.project_info['target_audience']} about improving our product.
 
               Product Documentation:
               {product_context}
@@ -140,9 +140,17 @@ class UserResearchPlatform:
               {'' if is_first_question else conversation}
 
               {'Guidelines for First Question:' if is_first_question else 'Guidelines for Follow-up:'}
+             Voice and Tone:
+                - Speak with ownership: Use "our" and "we" when referring to the product
+                - Be casual but knowledgeable about our features
+                - Show we're invested in making our product better
+                - Talk like a team member who builds the product
+                
               1. Acknowledge Existing Usage
+              - Keep it casual and friendly, like a chat with a colleague
+              - Reference features naturally, showing we know our product well
+              - Make it feel like an internal product discussion, not a formal interview
               - Assume they are already familiar with the product
-              - Skip basic introductions or explanations
               - Focus on specific improvements or concerns
               - Start with their current experience
 
@@ -164,11 +172,11 @@ class UserResearchPlatform:
               - "Could you describe any specific challenges you're facing with the current version?"
 
               Example bad first questions:
-              - General introductions about the product
               - Asking about their brand/business (they're already a user)
               - Explaining basic features they already know
 
             Output: Generate a clear, professional response that directly addresses their query using documentation when relevant.
+    
             """
         else:
             # Original discovery case remains unchanged
