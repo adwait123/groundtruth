@@ -52,6 +52,98 @@ function App() {
     setError(null);
   };
 
+
+const AnalysisResults = ({ analysis }) => {
+  const sections = analysis.split('\n\n').filter(Boolean);
+
+  const getIcon = (title) => {
+    switch (title.toLowerCase()) {
+      case 'key findings':
+        return <Target className="w-5 h-5" />;
+      case 'sentiment analysis':
+        return <MessageSquare className="w-5 h-5" />;
+      case 'market opportunity':
+        return <BarChart className="w-5 h-5" />;
+      case 'action items':
+        return <Lightbulb className="w-5 h-5" />;
+      case 'recommendations':
+        return <AlertTriangle className="w-5 h-5" />;
+      default:
+        return <Target className="w-5 h-5" />;
+    }
+  };
+
+  const getSentimentColor = (sentiment) => {
+    switch (sentiment) {
+      case 'Positive':
+        return 'bg-green-500/10 text-green-400';
+      case 'Negative':
+        return 'bg-red-500/10 text-red-400';
+      case 'Neutral':
+        return 'bg-yellow-500/10 text-yellow-400';
+      default:
+        return 'bg-blue-500/10 text-blue-400';
+    }
+  };
+
+  const renderContent = (line, i) => {
+    if (!line.trim()) return null;
+
+    if (line.startsWith('-')) {
+      const sentimentMatch = line.match(/\[(Positive|Negative|Neutral)\]/);
+      const sentiment = sentimentMatch ? sentimentMatch[1] : null;
+      const text = sentiment ? line.replace(/\[.*?\]/, '').slice(1).trim() : line.slice(1).trim();
+
+      return (
+        <div key={i} className="flex items-start space-x-3 p-2 rounded hover:bg-slate-800/40 transition-colors">
+          {sentiment && (
+            <div className={`px-2 py-1 rounded ${getSentimentColor(sentiment)} text-xs font-medium`}>
+              {sentiment}
+            </div>
+          )}
+          <div className="mt-1.5">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+          </div>
+          <span className="text-slate-300 flex-1">{text}</span>
+        </div>
+      );
+    }
+
+    return (
+      <p key={i} className="text-slate-400 pl-6">
+        {line.trim()}
+      </p>
+    );
+  };
+
+  return (
+    <div className="space-y-6 max-w-4xl mx-auto">
+      {sections.map((section, idx) => {
+        const [title, ...content] = section.split('\n');
+        const sectionTitle = title.replace(/^\d+\.\s*/, '').replace(/:$/, '');
+
+        return (
+          <div key={idx} className="bg-slate-800/40 rounded-lg border border-slate-700/50 overflow-hidden hover:bg-slate-800/60 transition-all duration-200">
+            <div className="flex items-center p-4 border-b border-slate-700/50 bg-slate-800/60">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                  {getIcon(sectionTitle)}
+                </div>
+                <h3 className="text-lg font-medium text-slate-100">{sectionTitle}</h3>
+              </div>
+            </div>
+            <div className="p-4 space-y-3">
+              {content.map((line, i) => renderContent(line, i))}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+
+  
   const handleProjectSubmit = async () => {
   if (!projectInfo.projectName || !projectInfo.goal || !projectInfo.targetAudience) {
     setError('Please fill in all fields');
