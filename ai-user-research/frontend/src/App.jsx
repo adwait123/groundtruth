@@ -676,13 +676,13 @@ const handleKeyPress = (e) => {
     </div>
     <div>
       <label className="block text-sm font-medium text-slate-300 mb-1">
-        Improvement Objective
+        Objective
       </label>
       <textarea
         value={projectInfo.improvementObjective}
         onChange={(e) => setProjectInfo({ ...projectInfo, improvementObjective: e.target.value })}
         className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100 h-32 resize-none"
-        placeholder="Describe what you're trying to improve. For example:&#13;&#10;- Specific features to enhance&#13;&#10;- Performance areas to optimize&#13;&#10;- User experience goals"
+        placeholder="Describe what pain points, blockers, and frustrations with a specific feature/product you looking to indentify. For example:&#13;&#10;- Why are users not engaging with a particular feature (e.g., XYZ feature) X&#13;&#10;- Why do users use the app but don’t return?&#13;&#10;- What prevents users from finding and using the advanced search functionality?"
       />
     </div>
     <div>
