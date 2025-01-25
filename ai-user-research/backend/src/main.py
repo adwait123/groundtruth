@@ -115,16 +115,13 @@ async def start_project(
 
         platform = UserResearchPlatform(api_key)
         platform.project_info = {
-                     project_name: str = Form(...),
-                    target_audience: str = Form(...),
-                    goal: str = Form(...),
-                    improvement_objective: Optional[str] = Form(None),
-                    discovery_type: Optional[str] = Form(None),
-                    domain: Optional[str] = Form(None),
-                    specific_goal: Optional[str] = Form(None),
-                    product_doc: Optional[UploadFile] = None,
-                    product_name: Optional[str] = Form(None),
-                    product_context: Optional[str] = Form(None)
+             "project_name": project_name,
+            "goal": goal,
+            "target_audience": target_audience,
+            "improvement_objective": improvement_objective if improvement_objective else "",
+            "research_objective": improvement_objective if improvement_objective else "" , # Add this line
+            "product_name": product_name,
+            "product_context": product_context
         }
 
         # Process the document if provided
