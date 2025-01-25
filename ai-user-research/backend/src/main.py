@@ -33,6 +33,7 @@ class ProjectInfo(BaseModel):
     goal: str
     target_audience: str
     api_key: Optional[str] = None  # Add this line
+    improvement_objective: Optional[str] = None
 
 
 
@@ -103,9 +104,6 @@ async def start_project(
         target_audience: str = Form(...),
         goal: str = Form(...),
         improvement_objective: Optional[str] = Form(None),
-        discovery_type: Optional[str] = Form(None),
-        domain: Optional[str] = Form(None),
-        specific_goal: Optional[str] = Form(None),
         product_doc: Optional[UploadFile] = None,
         product_name: Optional[str] = Form(None),
         product_context: Optional[str] = Form(None)
