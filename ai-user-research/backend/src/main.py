@@ -100,9 +100,15 @@ def extract_text_from_document(file_content: bytes, file_type: str) -> str:
 @app.post("/api/start-project")
 async def start_project(
         project_name: str = Form(...),
-        goal: str = Form(...),
         target_audience: str = Form(...),
-        product_doc: Optional[UploadFile] = None
+        goal: str = Form(...),
+        improvement_objective: Optional[str] = Form(None),
+        discovery_type: Optional[str] = Form(None),
+        domain: Optional[str] = Form(None),
+        specific_goal: Optional[str] = Form(None),
+        product_doc: Optional[UploadFile] = None,
+        product_name: Optional[str] = Form(None),
+        product_context: Optional[str] = Form(None)
 ):
     try:
         api_key = os.getenv("OPENAI_API_KEY")
@@ -111,9 +117,16 @@ async def start_project(
 
         platform = UserResearchPlatform(api_key)
         platform.project_info = {
-            "project_name": project_name,
-            "goal": goal,
-            "target_audience": target_audience
+                     project_name: str = Form(...),
+                    target_audience: str = Form(...),
+                    goal: str = Form(...),
+                    improvement_objective: Optional[str] = Form(None),
+                    discovery_type: Optional[str] = Form(None),
+                    domain: Optional[str] = Form(None),
+                    specific_goal: Optional[str] = Form(None),
+                    product_doc: Optional[UploadFile] = None,
+                    product_name: Optional[str] = Form(None),
+                    product_context: Optional[str] = Form(None)
         }
 
         # Process the document if provided
@@ -147,6 +160,9 @@ async def start_project(
                     status_code=500,
                     detail=f"Server error processing document: {str(e)}"
                 )
+
+            if goal == "diagnostic" and product_context:
+            platform.set_product_context(product_context)
 
         question = platform.generate_next_question()
         if not question:
