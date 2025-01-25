@@ -123,9 +123,9 @@ class UserResearchPlatform:
             return None
 
     def _get_base_prompt(self, conversation: str, conversation_stage: int) -> str:
-       """Get the appropriate base prompt based on project goal and conversation stage."""
-        is_diagnostic = self.project_info['goal'] == 'diagnostic'
-        is_first_question = conversation_stage == 0
+    """Get the appropriate base prompt based on project goal and conversation stage."""
+    is_diagnostic = self.project_info['goal'] == 'diagnostic'
+    is_first_question = conversation_stage == 0
 
         if is_diagnostic:
             objective = self.project_info.get('improvement_objective', '')
@@ -133,12 +133,6 @@ class UserResearchPlatform:
             doc_context = "\n".join(relevant_chunks)
             product_context = self.product_context or self.project_info.get('product_context', '')
             product_name = self.project_info.get('product_name', '')
-
-            # Track conversation progress and metrics
-            metrics = self._calculate_conversation_metrics(conversation)
-            current_path = self._identify_conversation_path(conversation)
-            missing_signals = self._identify_missing_signals(metrics)
-            objective_progress = self._track_objective_progress(conversation)
 
             return f"""
             ROLE: You are a professional research interviewer conducting diagnostic research to uncover insights about {product_name}. 
