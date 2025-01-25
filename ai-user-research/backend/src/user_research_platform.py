@@ -122,10 +122,11 @@ class UserResearchPlatform:
             print(f"Error generating question: {e}")
             return None
 
-    def _get_base_prompt(self, conversation: str, conversation_stage: int) -> str:
-    """Get the appropriate base prompt based on project goal and conversation stage."""
-    is_diagnostic = self.project_info['goal'] == 'diagnostic'
-    is_first_question = conversation_stage == 0
+def _get_base_prompt(self, conversation: str, conversation_stage: int) -> str:
+ """Get the appropriate base prompt based on project goal and conversation stage."""
+is_diagnostic = self.project_info['goal'] == 'diagnostic'
+is_first_question = conversation_stage == 0
+
 
         if is_diagnostic:
             objective = self.project_info.get('improvement_objective', '')
@@ -133,7 +134,7 @@ class UserResearchPlatform:
             doc_context = "\n".join(relevant_chunks)
             product_context = self.product_context or self.project_info.get('product_context', '')
             product_name = self.project_info.get('product_name', '')
-
+    
             return f"""
             ROLE: You are a professional research interviewer conducting diagnostic research to uncover insights about {product_name}. 
             Your goal is to identify user challenges, blockers, and opportunities for improvement.
