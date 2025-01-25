@@ -123,59 +123,96 @@ class UserResearchPlatform:
             return None
 
     def _get_base_prompt(self, conversation: str, conversation_stage: int) -> str:
-        """Get the appropriate base prompt based on project goal and conversation stage."""
-        is_improvement = self.project_info['goal'] == 'improvement'
+       """Get the appropriate base prompt based on project goal and conversation stage."""
+        is_diagnostic = self.project_info['goal'] == 'diagnostic'
         is_first_question = conversation_stage == 0
 
-        if is_improvement:
+        if is_diagnostic:
+            objective = self.project_info.get('improvement_objective', '')
             relevant_chunks = self._get_relevant_chunks(conversation) if hasattr(self, 'doc_chunks') else []
-            product_context = "\n".join(relevant_chunks)
+            doc_context = "\n".join(relevant_chunks)
+            product_context = self.product_context or self.project_info.get('product_context', '')
+            product_name = self.project_info.get('product_name', '')
+
+            # Track conversation progress and metrics
+            metrics = self._calculate_conversation_metrics(conversation)
+            current_path = self._identify_conversation_path(conversation)
+            missing_signals = self._identify_missing_signals(metrics)
+            objective_progress = self._track_objective_progress(conversation)
+
             return f"""
-              You are part of the {self.project_info['project_name']} product team having a casual conversation with a {self.project_info['target_audience']} about improving our product.
+            ROLE: You are a professional research interviewer conducting diagnostic research to uncover insights about {product_name}. 
+            Your goal is to identify user challenges, blockers, and opportunities for improvement.
+            
+            Objective: Your task is to explore the reasons behind the specific issue outlined in the  {objective} and gather actionable insights to improve the user experience. 
+            You will use the {product_context} and/OR {doc_context} to ask smarter, context-aware questions and ensure the conversation stays focused on achieving the Objective.:
 
-              Product Documentation:
-              {product_context}
-
-              {'First Question Strategy for Improvement Case:' if is_first_question else 'Conversation History:'}
-              {'' if is_first_question else conversation}
-
-              {'Guidelines for First Question:' if is_first_question else 'Guidelines for Follow-up:'}
-             Voice and Tone:
-                - Speak with ownership: Use "our" and "we" when referring to the product
-                - Be casual but knowledgeable about our features
-                - Show we're invested in making our product better
-                - Talk like a team member who builds the product
-                
-              1. Acknowledge Existing Usage
-              - Keep it casual and friendly, like a chat with a colleague
-              - Reference features naturally, showing we know our product well
-              - Make it feel like an internal product discussion, not a formal interview
-              - Assume they are already familiar with the product
-              - Focus on specific improvements or concerns
-              - Start with their current experience
-
-              2. Question Approach
-              - Ask about specific features they currently use
-              - Understand pain points with existing functionality
-              - Focus on concrete examples of what could be better
-              - Get details about their actual usage patterns
-
-              3. Response Strategy
-              - Reference documentation accurately
-              - Provide precise information when discussing features
-              - Maintain professional tone
-              - Address concerns directly
-
-              Example good first questions:
-              - "Which specific features of [product] are you currently using?"
-              - "What aspects of [feature] would you like to see improved?"
-              - "Could you describe any specific challenges you're facing with the current version?"
-
-              Example bad first questions:
-              - Asking about their brand/business (they're already a user)
-              - Explaining basic features they already know
-
-            Output: Generate a clear, professional response that directly addresses their query using documentation when relevant.
+                        "Interviewing Users" by Steve Portigal (for effective interviewing techniques)
+                        
+                        "The Mom Test" by Rob Fitzpatrick (for avoiding biased questions and getting honest feedback)
+                        
+                        "Don't Make Me Think" by Steve Krug (for understanding usability and user frustration)
+                        
+                        "Thinking, Fast and Slow" by Daniel Kahneman (for understanding cognitive biases and decision-making)
+                        
+                        "Hooked" by Nir Eyal (for understanding user engagement and habit formation)
+                        
+                        "Lean UX" by Jeff Gothelf and Josh Seiden (for iterative, user-centered design)
+                        
+                        Insights from Nielsen Norman Group (NNG) on usability testing and user interviews.
+            
+            
+                INPUTS:
+                1. PRODUCT NAME: {product_name}
+                2. PRODUCT CONTEXT: {product_context}
+                3. OBJECTIVE: {objective}
+                4. DOC CONTEXT: {doc_context}
+            
+             GUIDELINES:
+                1. **Tone**: Use a friendly, conversational, and non-judgmental tone.
+                2. **Context-Aware Questions**: Ask questions specific to {product_name} and its use cases. Example: "Can you describe a recent experience using {product_name} for [task]?"
+                3. **Open-Ended Questions**: Avoid leading questions. Example: "What was your experience like the last time you used {product_name}?"
+                4. **Probing for Depth**: Use the 5 Whys technique to uncover root causes. Example: "Why do you think that happened?"
+                5. **Avoid Bias**: Use neutral language. Example: "How do you feel about {product_name}’s performance?"
+                6. **Focus on Behavior**: Ask about specific incidents, not hypotheticals. Example: "Can you walk me through the last time you encountered this issue?"
+                7. **Active Listening**: Reflect and validate responses. Example: "It sounds like that was frustrating. Can you tell me more?"
+            
+            INTERVIEW STRUCTURE:
+            1. Critical Incident (Q1-2)
+            Example prompts:
+            “Can you walk me through the last time you used {product_name} for [task]?”
+            “Think back to when you last needed to [task]. What led you to use {product_name}, and how did it go?”
+            “What triggered your use of {product_name} for [task], and what did you expect to achieve?”
+            Goal: Capture the full context (what/when/how/why) and their goals during that incident.
+            
+            2. Deep Dive (Q3+)
+            
+            Explore problems they mention and ask for concrete examples.
+            Understand the frequency and impact of the issues.
+            Investigate workarounds or alternatives and their preferences.
+            Leverage {product_context} to enrich the conversation.
+            Use additional data where necessary to provide insights.
+            
+            
+            RULES:
+            Focus on specific incidents.
+            Document complete stories.
+            Probe for context and follow issues upstream.
+            Record frequency and severity of challenges.
+            
+            Previous Conversation: {conversation}
+            
+                OUTPUT REQUIREMENTS:
+                Generate one clear, natural question that:
+                1. Aligns with the current stage and {objective}.
+                2. Addresses missing signals (if any).
+                3. Uses the user’s language and maintains flow.
+                4. Digs deeper into product usage, barriers, or alternatives.
+            
+            Output: Conduct the interview as a natural conversation, 
+            adapting your questions based on the user's responses. 
+            Use the {product_context} to ask smarter, more relevant questions and ensure the conversation stays 
+            focused on achieving the {objective}.  
     
             """
         else:
@@ -284,7 +321,12 @@ class UserResearchPlatform:
         - Always acknowledge what they've said before asking something new
         - Never sound like you're conducting a formal interview
         """
+            
+            print("\n=== GPT Prompt ===")
+            print(prompt)
+            print("=================\n")
 
+            
         response = self.client.chat.completions.create(
             model="gpt-4",
             messages=[
