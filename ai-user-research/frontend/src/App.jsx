@@ -17,6 +17,12 @@ function App() {
     projectName: '',
     goal: '',
     targetAudience: '',
+    discoveryType: '',
+    domain: '',
+    userType: '',
+    specificGoal: '',
+    productName: '',
+    productContext: ''
 
   });
 
@@ -163,10 +169,16 @@ const AnalysisResults = ({ analysis }) => {
     formData.append('project_name', projectInfo.projectName);
     formData.append('goal', projectInfo.goal);
     formData.append('target_audience', projectInfo.targetAudience);
-    if (productDoc) {
-      formData.append('product_doc', productDoc);
-    }
+    
+    if (projectInfo.goal === 'diagnostic') {
 
+        formData.append('product_name', projectInfo.productName);
+      formData.append('product_context', projectInfo.productContext);
+      formData.append('improvement_objective', projectInfo.improvementObjective);
+      if (productDoc) {
+        formData.append('product_doc', productDoc);
+      }
+    }
     const response = await fetch(`${API_URL}/api/start-project`, {
       method: 'POST',
       body: formData,
@@ -368,7 +380,7 @@ const speakQuestion = async (text) => {
   // Render functions for different modes
   const renderModeSelection = () => (
     <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 shadow-xl">
-      <h2 className="text-lg font-medium mb-6 text-slate-100">Choose Interview Mode</h2>
+      <h2 className="text-lg font-medium mb-6 text-slate-100">Choose Interview Mode (User view)</h2>
       <div className="grid grid-cols-2 gap-4">
         <button
           onClick={() => {
@@ -502,7 +514,7 @@ const handleKeyPress = (e) => {
  const renderChatInterview = () => (
   <div className="bg-slate-800/40 p-6 rounded-lg border border-slate-700/50">
     <div className="flex justify-between items-center mb-4">
-      <h2 className="text-lg font-medium text-slate-100">Interview Chat</h2>
+      <h2 className="text-lg font-medium text-slate-100">Interview Chat (User View)</h2>
       <button
         onClick={() => setInterviewMode('voice')}
         className="p-2 rounded-full bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 transition-colors"
@@ -607,7 +619,7 @@ const handleKeyPress = (e) => {
 
         {currentStep === 'setup' && (
   <div className="bg-slate-800 p-6 rounded-lg border border-slate-700 shadow-xl">
-    <h2 className="text-lg font-medium mb-6 text-slate-100">Project Setup</h2>
+    <h2 className="text-lg font-medium mb-6 text-slate-100">Project Setup (Business View)</h2>
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-slate-300 mb-1">
@@ -631,8 +643,8 @@ const handleKeyPress = (e) => {
           className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100"
         >
           <option value="">Select a goal</option>
-          <option value="discovery">Discovery</option>
-          <option value="improvement">Improvement</option>
+          <option value="discovery">Exploratory Research (Discover unmet needs, inefficiencies, and latent opportunities)</option>
+          <option value="diagnostic">Diagnostic Research (Identify pain points, blockers, and frustrations with a specific product/feature)</option>
         </select>
       </div>
       <div>
@@ -648,78 +660,113 @@ const handleKeyPress = (e) => {
         />
       </div>
 
-      {/* File upload section - only shows when 'improvement' is selected */}
-      {projectInfo.goal === 'improvement' && (
-        <div className="mt-4">
-          <label className="block text-sm font-medium text-slate-300 mb-1">
-            Product Documentation
-            <span className="text-red-400 ml-1">*</span>
-          </label>
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-600 border-dashed rounded-md hover:border-blue-500 transition-colors">
-            <div className="space-y-1 text-center">
-              <svg
-                className="mx-auto h-12 w-12 text-slate-400"
-                stroke="currentColor"
-                fill="none"
-                viewBox="0 0 48 48"
-                aria-hidden="true"
-              >
-                <path
-                  d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <div className="flex text-sm text-slate-400 justify-center">
-                <label className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400">
-                  <span>Upload a file</span>
-                  <input
-                    type="file"
-                    className="sr-only"
-                    onChange={handleFileUpload}
-                    accept=".txt,.md,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.pptx"
-                  />
-                </label>
-                <p className="pl-1">or drag and drop</p>
-              </div>
-              <p className="text-xs text-slate-400">
-                PDF, DOCX, TXT, MD, or PPTX up to 10MB
-              </p>
-            </div>
+{projectInfo.goal === 'diagnostic' && (
+  <div className="mt-4 space-y-4">
+    <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Product Name
+            </label>
+            <input
+              type="text"
+              value={projectInfo.productName || ''}
+              onChange={(e) => setProjectInfo({ ...projectInfo, productName: e.target.value })}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100"
+              placeholder="Enter product name"
+            />
+    </div>
+    <div>
+      <label className="block text-sm font-medium text-slate-300 mb-1">
+        Improvement Objective
+      </label>
+      <textarea
+        value={projectInfo.improvementObjective}
+        onChange={(e) => setProjectInfo({ ...projectInfo, improvementObjective: e.target.value })}
+        className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100 h-32 resize-none"
+        placeholder="Describe what you're trying to improve. For example:&#13;&#10;- Specific features to enhance&#13;&#10;- Performance areas to optimize&#13;&#10;- User experience goals"
+      />
+    </div>
+    <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+              Product Context
+            </label>
+            <textarea
+              value={projectInfo.productContext || ''}
+              onChange={(e) => setProjectInfo({ ...projectInfo, productContext: e.target.value })}
+              className="w-full p-2 bg-slate-700 border border-slate-600 rounded text-slate-100 h-32"
+              placeholder="Describe your product, its features, and current state..."
+            />
+     </div>
+
+    <div>
+      <label className="block text-sm font-medium text-slate-300 mb-1">
+        Product Documentation (Optional)
+      </label>
+      <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-slate-600 border-dashed rounded-md hover:border-blue-500 transition-colors">
+        <div className="space-y-1 text-center">
+          <svg
+            className="mx-auto h-12 w-12 text-slate-400"
+            stroke="currentColor"
+            fill="none"
+            viewBox="0 0 48 48"
+            aria-hidden="true"
+          >
+            <path
+              d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <div className="flex text-sm text-slate-400 justify-center">
+            <label className="relative cursor-pointer rounded-md font-medium text-blue-500 hover:text-blue-400">
+              <span>Upload a file</span>
+              <input
+                type="file"
+                className="sr-only"
+                onChange={handleFileUpload}
+                accept=".txt,.md,.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.pdf,.pptx"
+              />
+            </label>
+            <p className="pl-1">or drag and drop</p>
           </div>
-          {productDoc && (
-            <div className="mt-2 flex items-center text-sm text-green-400">
-              <svg
-                className="flex-shrink-0 mr-1.5 h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              {productDoc.name}
-            </div>
-          )}
+          <p className="text-xs text-slate-400">
+            PDF, DOCX, TXT, MD, or PPTX up to 10MB
+          </p>
+        </div>
+      </div>
+      {productDoc && (
+        <div className="mt-2 flex items-center text-sm text-green-400">
+          <svg
+            className="flex-shrink-0 mr-1.5 h-5 w-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          {productDoc.name}
         </div>
       )}
+    </div>
+  </div>
+)}
 
-      <button
-        onClick={handleProjectSubmit}
-        disabled={isLoading || (projectInfo.goal === 'improvement' && !productDoc)}
-        className={`w-full py-2 px-4 rounded transition-colors ${
-          isLoading || (projectInfo.goal === 'improvement' && !productDoc)
-            ? 'bg-blue-600/50 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700'
-        } text-white`}
-      >
-        {isLoading ? 'Starting...' : 'Continue'}
-      </button>
+<button
+  onClick={handleProjectSubmit}
+  disabled={isLoading || (projectInfo.goal === 'diagnostic' && (!projectInfo.productName || !projectInfo.productContext || !projectInfo.improvementObjective))}
+  className={`w-full py-2 px-4 rounded transition-colors ${
+    isLoading || (projectInfo.goal === 'diagnostic' && (!projectInfo.productName || !projectInfo.productContext || !projectInfo.improvementObjective))
+      ? 'bg-blue-600/50 cursor-not-allowed'
+      : 'bg-blue-600 hover:bg-blue-700'
+  } text-white`}
+>
+  {isLoading ? 'Starting...' : 'Continue'}
+</button>
     </div>
   </div>
 )}
