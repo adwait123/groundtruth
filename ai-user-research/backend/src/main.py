@@ -157,7 +157,7 @@ async def start_project(
                 )
 
             if goal == "diagnostic" and product_context:
-            platform.set_product_context(product_context)
+                platform.set_product_context(product_context)
 
         question = platform.generate_next_question()
         if not question:
