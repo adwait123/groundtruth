@@ -309,7 +309,7 @@ class UserResearchPlatform:
             - Use their exact words in your acknowledgment
             - Keep the tone friendly and curious
             - Make them feel comfortable sharing more
-            """"
+            """
 
         try:
             return self._make_gpt_call(elaboration_prompt)
