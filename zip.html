@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZIP Code Polygon Visualization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #map {
+            width: 100%;
+            height: 100vh;
+        }
+        .info-card {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            max-width: 350px;
+        }
+        .info-card h2 {
+            margin: 0 0 10px 0;
+            font-size: 16px;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 5px;
+        }
+        .info-card p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .legend {
+            background: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            line-height: 18px;
+        }
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.7;
+        }
+        .zoom-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            font-size: 12px;
+            z-index: 1000;
+        }
+        .file-inputs {
+            position: absolute;
+            top: 10px;
+            left: 50px;
+            right: 50px;
+            background: white;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            text-align: center;
+        }
+        .file-inputs h3 {
+            margin-top: 0;
+        }
+        .file-inputs label {
+            display: inline-block;
+            margin: 10px;
+            font-weight: bold;
+        }
+        .file-inputs input {
+            margin-top: 5px;
+        }
+        .file-inputs button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        .file-inputs button:hover {
+            background: #45a049;
+        }
+        .loading {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            z-index: 1001;
+            text-align: center;
+        }
+        #locationSearch {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        #searchResults {
+            max-height: 150px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+        .search-result {
+            padding: 5px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        .search-result:hover {
+            background-color: #f5f5f5;
+        }
+        .stats {
+            background: white;
+            padding: 10px;
+            margin-top: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <div class="file-inputs" id="fileInputs">
+        <h3>ZIP Code Polygon Visualization</h3>
+        <div>
+            <label for="polygonFileInput">Polygon Data (CSV/TSV):</label>
+            <input type="file" id="polygonFileInput" accept=".csv,.tsv">
+        </div>
+        <div>
+            <label for="zipDatabaseInput">ZIP Code Database (CSV):</label>
+            <input type="file" id="zipDatabaseInput" accept=".csv">
+        </div>
+        <button id="visualizeButton">Visualize Polygons</button>
+
+        <div id="searchContainer" style="display: none;">
+            <input type="text" id="locationSearch" placeholder="Search for business location...">
+            <div id="searchResults"></div>
+        </div>
+
+        <div id="statsContainer" class="stats" style="display: none;"></div>
+    </div>
+
+    <div class="loading" id="loadingIndicator">
+        <h3>Loading data and creating visualization...</h3>
+        <p>This may take a few moments for large datasets.</p>
+    </div>
+
+    <div class="zoom-info">Zoom and pan to explore polygons. Click on a polygon for details.</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <script>
+        // Initialize the map
+        const map = L.map('map').setView([39.8283, -98.5795], 4); // Center on US
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Variable to store the loaded data
+        let zipCoordinates = {};
+        let polygonData = [];
+        let processedPolygons = [];
+        let markers = {
+            vertices: [],
+            centers: [],
+            contained: []
+        };
+
+        // Add legend
+        const legend = L.control({position: 'bottomright'});
+        legend.onAdd = function (map) {
+            const div = L.DomUtil.create('div', 'legend');
+            const grades = [0, 40, 70];
+            const labels = ['Low Coverage (0-39%)', 'Medium Coverage (40-69%)', 'High Coverage (70-100%)'];
+
+            div.innerHTML = '<h4>Coverage</h4>';
+
+            for (let i = 0; i < grades.length; i++) {
+                div.innerHTML +=
+                    '<i style="background:' + getColor(grades[i] + 1) + '"></i> ' +
+                    labels[i] + '<br>';
+            }
+
+            div.innerHTML +=
+                '<div style="margin-top: 10px;">' +
+                '<i style="background: #ff3333; border-radius: 50%;"></i> Polygon Vertices<br>' +
+                '<i style="background: #3333ff; border-radius: 50%;"></i> Center Point<br>' +
+                '<i style="background: #33cc33; border-radius: 50%;"></i> Inside ZIPs' +
+                '</div>';
+
+            return div;
+        };
+
+        // Add event listeners to UI elements
+        document.getElementById('visualizeButton').addEventListener('click', startVisualization);
+
+        // Function to start the visualization process
+        function startVisualization() {
+            const polygonFile = document.getElementById('polygonFileInput').files[0];
+            const zipDbFile = document.getElementById('zipDatabaseInput').files[0];
+
+            if (!polygonFile || !zipDbFile) {
+                alert('Please select both required files.');
+                return;
+            }
+
+            // Show loading indicator
+            document.getElementById('loadingIndicator').style.display = 'block';
+
+            // Clear previous data
+            clearMap();
+
+            // Load the data
+            Promise.all([
+                loadZipDatabase(zipDbFile),
+                loadPolygonData(polygonFile)
+            ]).then(([zipDb, polygons]) => {
+                zipCoordinates = zipDb;
+                polygonData = polygons;
+
+                // Process and display the polygons
+                processPolygons();
+
+                // Hide loading indicator and file inputs
+                document.getElementById('loadingIndicator').style.display = 'none';
+
+                // Show search container
+                document.getElementById('searchContainer').style.display = 'block';
+
+                // Show stats
+                updateStats();
+                document.getElementById('statsContainer').style.display = 'block';
+
+                // Setup search functionality
+                setupSearch();
+            }).catch(error => {
+                console.error('Error loading data:', error);
+                alert('Error loading data: ' + error.message);
+                document.getElementById('loadingIndicator').style.display = 'none';
+            });
+        }
+
+        // Function to clear the map
+        function clearMap() {
+            // Remove all markers and polygons
+            processedPolygons.forEach(data => {
+                if (data.polygonLayer) {
+                    map.removeLayer(data.polygonLayer);
+                }
+            });
+
+            // Clear all marker arrays
+            Object.values(markers).forEach(markerArray => {
+                markerArray.forEach(marker => map.removeLayer(marker));
+                markerArray.length = 0;
+            });
+
+            // Reset data arrays
+            processedPolygons = [];
+        }
+
+        // Load ZIP code database
+        function loadZipDatabase(file) {
+            return new Promise((resolve, reject) => {
+                Papa.parse(file, {
+                    header: true,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const zipDb = {};
+
+                        if (results.errors && results.errors.length > 0) {
+                            console.warn('Warnings parsing ZIP database:', results.errors);
+                        }
+
+                        results.data.forEach(row => {
+                            // Check various possible column names
+                            const zipValue = row.zip || row.ZIP || row.zipcode || row.ZIPCODE || row.postal_code;
+                            const latValue = row.lat || row.LAT || row.latitude || row.LATITUDE;
+                            const lngValue = row.lng || row.LNG || row.lon || row.LON || row.longitude || row.LONGITUDE;
+
+                            if (zipValue && latValue && lngValue) {
+                                // Convert to number if necessary
+                                const zip = typeof zipValue === 'number' ? zipValue : parseInt(zipValue);
+                                const lat = typeof latValue === 'number' ? latValue : parseFloat(latValue);
+                                const lng = typeof lngValue === 'number' ? lngValue : parseFloat(lngValue);
+
+                                if (!isNaN(zip) && !isNaN(lat) && !isNaN(lng)) {
+                                    zipDb[zip] = [lat, lng];
+                                }
+                            }
+                        });
+
+                        const zipCount = Object.keys(zipDb).length;
+                        if (zipCount === 0) {
+                            reject(new Error('No valid ZIP codes found in the database. Check file format.'));
+                        } else {
+                            console.log(`Loaded ${zipCount} ZIP codes with coordinates`);
+                            resolve(zipDb);
+                        }
+                    },
+                    error: function(error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Load polygon data
+        function loadPolygonData(file) {
+            return new Promise((resolve, reject) => {
+                // Determine delimiter based on file extension
+                const delimiter = file.name.toLowerCase().endsWith('.tsv') ? '\t' : ',';
+
+                Papa.parse(file, {
+                    header: true,
+                    delimiter: delimiter,
+                    dynamicTyping: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.errors && results.errors.length > 0) {
+                            console.warn('Warnings parsing polygon data:', results.errors);
+                        }
+
+                        const validRows = results.data.filter(row => {
+                            // Check if the row has the necessary fields
+                            return row &&
+                                   row.business_id !== undefined &&
+                                   row.business_location !== undefined &&
+                                   row.boundary_zips !== undefined;
+                        });
+
+                        if (validRows.length === 0) {
+                            reject(new Error('No valid polygon data found. Check file format.'));
+                        } else {
+                            console.log(`Loaded ${validRows.length} business locations`);
+                            resolve(validRows);
+                        }
+                    },
+                    error: function(error) {
+                        reject(error);
+                    }
+                });
+            });
+        }
+
+        // Process the polygon data and display on map
+        function processPolygons() {
+            // Process each business location with a valid polygon
+            polygonData.forEach(row => {
+                // Skip rows without valid polygons
+                if (row.has_valid_polygon !== 'Yes' || !row.boundary_zips) {
+                    return;
+                }
+
+                // Extract boundary ZIPs
+                let boundaryZips;
+                if (typeof row.boundary_zips === 'string') {
+                    boundaryZips = row.boundary_zips.split(',').map(zip => {
+                        const trimmed = zip.trim();
+                        return typeof trimmed === 'number' ? trimmed : parseInt(trimmed);
+                    });
+                } else if (typeof row.boundary_zips === 'number') {
+                    boundaryZips = [row.boundary_zips];
+                } else {
+                    return; // Invalid boundary ZIPs format
+                }
+
+                // Filter out invalid ZIPs
+                boundaryZips = boundaryZips.filter(zip => !isNaN(zip));
+
+                if (boundaryZips.length < 3) {
+                    console.warn(`Skipping ${row.business_location}: Not enough valid boundary ZIPs`);
+                    return;
+                }
+
+                // Get coordinates for boundary ZIPs
+                const polygonCoords = [];
+                for (const zip of boundaryZips) {
+                    if (zip in zipCoordinates) {
+                        polygonCoords.push(zipCoordinates[zip]);
+                    }
+                }
+
+                // Skip if not enough points for a polygon (need at least 3)
+                if (polygonCoords.length < 3) {
+                    console.warn(`Skipping ${row.business_location}: Not enough valid coordinates for boundary ZIPs`);
+                    return;
+                }
+
+                // Calculate center point
+                const center = calculateCentroid(polygonCoords);
+
+                // Extract contained ZIP count and coverage
+                const containedCount = typeof row.contained_zip_count === 'number' ?
+                                      row.contained_zip_count :
+                                      parseInt(row.contained_zip_count) || 0;
+
+                const within100mi = typeof row.within_100miles === 'number' ?
+                                   row.within_100miles :
+                                   parseInt(row.within_100miles) || 0;
+
+                const coverage = typeof row.coverage_percentage === 'number' ?
+                                row.coverage_percentage :
+                                parseInt(row.coverage_percentage) || 0;
+
+                // Create polygon style based on coverage
+                const polygonStyle = {
+                    fillColor: getColor(coverage),
+                    weight: 2,
+                    opacity: 1,
+                    color: getColor(coverage),
+                    fillOpacity: 0.35
+                };
+
+                // Create the polygon popup
+                const popupContent = `
+                    <div class="info-card">
+                        <h2>${row.business_location} ZIP Code Analysis</h2>
+                        <p><strong>Boundary ZIPs:</strong> ${boundaryZips.join(', ')}</p>
+                        <p><strong>Contained:</strong> ${containedCount} ZIPs</p>
+                        <p><strong>Total within 100mi:</strong> ${within100mi} ZIPs</p>
+                        <p><strong>Coverage:</strong> ${coverage}%</p>
+                    </div>
+                `;
+
+                // Create and add the polygon
+                const polygon = L.polygon(polygonCoords, polygonStyle)
+                    .bindPopup(popupContent)
+                    .addTo(map);
+
+                // Add to processed polygons array
+                processedPolygons.push({
+                    id: row.business_id,
+                    location: row.business_location,
+                    boundaryZips: boundaryZips,
+                    containedCount: containedCount,
+                    within100mi: within100mi,
+                    coverage: coverage,
+                    center: center,
+                    coords: polygonCoords,
+                    polygonLayer: polygon
+                });
+
+                // Add markers for polygon vertices (red)
+                polygonCoords.forEach(coord => {
+                    const marker = L.circleMarker(coord, {
+                        radius: 4,
+                        fillColor: '#ff3333',
+                        color: '#990000',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    markers.vertices.push(marker);
+                });
+
+                // Add marker for center point (blue)
+                if (center) {
+                    const centerMarker = L.circleMarker(center, {
+                        radius: 5,
+                        fillColor: '#3333ff',
+                        color: '#000099',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    markers.centers.push(centerMarker);
+                }
+
+                // Get contained ZIP codes (if available as JSON)
+                // This would require additional data or calculation
+                // For visualization purposes, we can simulate some contained ZIPs
+                simulateContainedZips(polygon, containedCount);
+            });
+
+            // Set view to show all polygons
+            if (processedPolygons.length > 0) {
+                const allCoords = processedPolygons.flatMap(data => data.coords);
+                const bounds = L.latLngBounds(allCoords);
+                map.fitBounds(bounds);
+
+                // Add legend
+                legend.addTo(map);
+            }
+        }
+
+        // Function to simulate contained ZIPs for visualization
+        function simulateContainedZips(polygon, count) {
+            // Limit the number of markers for performance
+            const maxMarkers = Math.min(count, 30);
+
+            if (maxMarkers <= 0) return;
+
+            const bounds = polygon.getBounds();
+            const centerLat = bounds.getCenter().lat;
+            const centerLng = bounds.getCenter().lng;
+            const lngSpan = bounds.getEast() - bounds.getWest();
+            const latSpan = bounds.getNorth() - bounds.getSouth();
+
+            // Create markers within polygon bounds
+            let markersAdded = 0;
+            let attempts = 0;
+
+            while (markersAdded < maxMarkers && attempts < maxMarkers * 4) {
+                attempts++;
+
+                // Generate random position within bounds (with some margin)
+                const lat = centerLat + (Math.random() - 0.5) * latSpan * 0.8;
+                const lng = centerLng + (Math.random() - 0.5) * lngSpan * 0.8;
+
+                // Check if point is inside polygon
+                const point = L.latLng(lat, lng);
+                if (isPointInPolygon(point, polygon)) {
+                    const marker = L.circleMarker([lat, lng], {
+                        radius: 3,
+                        fillColor: '#33cc33',
+                        color: '#009900',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }).addTo(map);
+
+                    markers.contained.push(marker);
+                    markersAdded++;
+                }
+            }
+        }
+
+        // Helper function to check if a point is in a polygon
+        function isPointInPolygon(point, polygon) {
+            const polygonLatLngs = polygon.getLatLngs()[0];
+
+            // Leaflet's contains method (if available)
+            if (polygon.contains && typeof polygon.contains === 'function') {
+                return polygon.contains(point);
+            }
+
+            // Manual point-in-polygon check (ray casting algorithm)
+            let inside = false;
+            for (let i = 0, j = polygonLatLngs.length - 1; i < polygonLatLngs.length; j = i++) {
+                const xi = polygonLatLngs[i].lat, yi = polygonLatLngs[i].lng;
+                const xj = polygonLatLngs[j].lat, yj = polygonLatLngs[j].lng;
+
+                const intersect = ((yi > point.lng) !== (yj > point.lng)) &&
+                    (point.lat < (xj - xi) * (point.lng - yi) / (yj - yi) + xi);
+
+                if (intersect) inside = !inside;
+            }
+
+            return inside;
+        }
+
+        // Calculate centroid of polygon coordinates
+        function calculateCentroid(coords) {
+            if (!coords || coords.length === 0) return null;
+
+            let totalLat = 0, totalLng = 0;
+
+            coords.forEach(coord => {
+                totalLat += coord[0];
+                totalLng += coord[1];
+            });
+
+            return [totalLat / coords.length, totalLng / coords.length];
+        }
+
+        // Get color based on coverage percentage
+        function getColor(coverage) {
+            return coverage > 70 ? '#00cc00' :  // High coverage - Green
+                   coverage > 40 ? '#cccc00' :  // Medium coverage - Yellow
+                                  '#cc0000';    // Low coverage - Red
+        }
+
+        // Setup search functionality
+        function setupSearch() {
+            const searchInput = document.getElementById('locationSearch');
+            const resultsContainer = document.getElementById('searchResults');
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+
+                if (searchTerm.length < 2) {
+                    resultsContainer.innerHTML = '';
+                    return;
+                }
+
+                const matchingLocations = processedPolygons
+                    .filter(p => p.location.toLowerCase().includes(searchTerm))
+                    .slice(0, 10); // Limit to 10 results
+
+                resultsContainer.innerHTML = '';
+
+                if (matchingLocations.length === 0) {
+                    resultsContainer.innerHTML = '<div class="search-result">No matches found</div>';
+                    return;
+                }
+
+                matchingLocations.forEach(location => {
+                    const div = document.createElement('div');
+                    div.className = 'search-result';
+                    div.textContent = location.location;
+                    div.addEventListener('click', function() {
+                        // Zoom to the polygon
+                        const polygon = location.polygonLayer;
+                        map.fitBounds(polygon.getBounds());
+                        polygon.openPopup();
+
+                        // Clear search
+                        searchInput.value = '';
+                        resultsContainer.innerHTML = '';
+                    });
+
+                    resultsContainer.appendChild(div);
+                });
+            });
+        }
+
+        // Update statistics
+        function updateStats() {
+            const statsContainer = document.getElementById('statsContainer');
+
+            // Calculate statistics
+            const validPolygons = processedPolygons.length;
+            const totalBusinesses = polygonData.length;
+
+            // Coverage ranges
+            const highCoverage = processedPolygons.filter(p => p.coverage >= 70).length;
+            const mediumCoverage = processedPolygons.filter(p => p.coverage >= 40 && p.coverage < 70).length;
+            const lowCoverage = processedPolygons.filter(p => p.coverage < 40).length;
+
+            // Average coverage
+            const avgCoverage = processedPolygons.length > 0 ?
+                                Math.round(processedPolygons.reduce((sum, p) => sum + p.coverage, 0) / processedPolygons.length) :
+                                0;
+
+            // Display statistics
+            statsContainer.innerHTML = `
+                <strong>Statistics:</strong> ${validPolygons} of ${totalBusinesses} businesses have valid polygons (${Math.round(validPolygons/totalBusinesses*100)}%)
+                <br>Coverage: ${highCoverage} high, ${mediumCoverage} medium, ${lowCoverage} low | Average: ${avgCoverage}%
+            `;
+        }
+    </script>
+</body>
+</html>
